@@ -9,6 +9,7 @@ public class Main {
     static BlockingQueue<String> aQueue = new ArrayBlockingQueue<>(100);
     static BlockingQueue<String> bQueue = new ArrayBlockingQueue<>(100);
     static BlockingQueue<String> cQueue = new ArrayBlockingQueue<>(100);
+
     public static void main(String[] args) throws InterruptedException {
 
         List<Thread> threads = new ArrayList<>();
@@ -29,51 +30,15 @@ public class Main {
         });
 
         Thread analizerA = new Thread(() -> {
-            int max = 0;
-            for (int i = 0; i < 10_000; i++) {
-                try {
-                    String text = aQueue.take();
-                    int sum = searchSymbol(text, 'a');
-                    if (max < sum){
-                        max = sum;
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            System.out.println("max a: " + max);
+            calculate(aQueue, 'a');
         });
 
         Thread analizerB = new Thread(() -> {
-            int max = 0;
-            for (int i = 0; i < 10_000; i++) {
-                try {
-                    String text = bQueue.take();
-                    int sum = searchSymbol(text, 'b');
-                    if (max < sum){
-                        max = sum;
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            System.out.println("max b: " + max);
+            calculate(bQueue, 'b');
         });
 
         Thread analizerC = new Thread(() -> {
-            int max = 0;
-            for (int i = 0; i < 10_000; i++) {
-                try {
-                    String text = cQueue.take();
-                    int sum = searchSymbol(text, 'c');
-                    if (max < sum){
-                        max = sum;
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            System.out.println("max c: " + max);
+            calculate(cQueue, 'c');
         });
 
         threads.add(textThread);
@@ -92,15 +57,26 @@ public class Main {
         System.out.println("finish");
     }
 
-    public static int searchSymbol(String word, char symbol) {
-        int length = word.length();
-        int count = 0;
-        for (int i = 0; i < length; i++) {
-            if (word.charAt(i) == symbol) {
-                count++;
+    // Подсчет максимальной длины одинаковых символов в строке
+    public static void calculate(BlockingQueue<String> queue, char symbol) {
+        int max = 0; // максимальное кол-во одинаковых символов в строке
+        for (int i = 0; i < 10_000; i++) {
+            try {
+                String text = queue.take();
+                int sum = 0; // количество одинаковых символов в строке
+                for (int j = 0; j < text.length(); j++) {
+                    if (text.charAt(j) == symbol) {
+                        sum++;
+                    }
+                }
+                if (max < sum) {
+                    max = sum;
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
-        return count;
+        System.out.println("max " + symbol + ": " + max);
     }
 
     public static String generateText(String letters, int length) {
